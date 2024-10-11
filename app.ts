@@ -1,4 +1,34 @@
-import { chromium } from "playwright";
+import { chromium, Locator } from "playwright";
+import { mkConfig, generateCsv, asString } from "export-to-csv";
+import { write, writeFile } from "node:fs";
+import { Buffer } from "node:buffer";
+
+async function trimAll(element: Locator): Promise<string> {
+  return (await element.allInnerTexts())[0].trim();
+}
+
+function generateCsvFromTable(headers: string[], data: string[][]): void {
+  const writeData: { [key: string]: string }[] = [];
+  data.forEach(rowData => {
+    const row: { [key: string]: string } = {};
+    for (let i = 0; i < rowData.length; i++) {
+      row[headers[i]] = rowData[i];
+    } writeData.push(row);
+  })
+  console.log("writeData:", writeData);
+  console.log("headers:", headers);
+
+  const filename = `output.csv`;
+  const csv = generateCsv(mkConfig({
+    columnHeaders: headers
+  }))(writeData);
+  writeFile(filename, new Uint8Array(Buffer.from(asString(csv))), (err) => {
+    if (err) {
+      throw err;
+    }
+    console.log("file saved: ", filename);
+  });
+}
 
 const targetLists = ["毒物及び劇物取締法"];
 const targetLaws = ["毒物及び劇物取締法"];
@@ -60,6 +90,27 @@ const targetLaws = ["毒物及び劇物取締法"];
       await detailTablePage.goto(detailTablePage.url());
       console.log("Updated", listName, "detail table");
       console.log(detailTablePage.url());
+
+      const tableRows = await detailTablePage.locator(".list-table").locator("tr");
+      const tableHeaders: string[] = [];
+      const tableData: string[][] = [];
+      for (let j = 0; j < await tableRows.count(); j++) {
+        const rowElement = await tableRows.nth(j);
+        const tds = await rowElement.locator(`${j === 0 ? "td table tbody tr td:nth-child(1)" : "td"}`);
+        for (let k = 0; k < await tds.count(); k++) {
+          const td = await tds.nth(k);
+          if (j == 0) {
+            tableHeaders.push(await trimAll(td));
+          }
+          else {
+            if (k == 0) {
+              tableData.push([]);
+            }
+            tableData[j - 1].push(await trimAll(td));
+          }
+        }
+      }
+      generateCsvFromTable(tableHeaders, tableData);
     }
   }
 

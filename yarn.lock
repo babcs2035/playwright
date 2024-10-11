@@ -504,6 +504,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"export-to-csv@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "export-to-csv@npm:1.4.0"
+  checksum: 10c0/c64b19ebc04ed35cf4a5f2b59b74b1ae8f93724cda82711b855fa484c9962dcbd9674a3981bc64cc6c5ce9b8c9d0b919e676626e830bc67feb9c2fd043f9b609
+  languageName: node
+  linkType: hard
+
 "foreground-child@npm:^3.1.0":
   version: 3.3.0
   resolution: "foreground-child@npm:3.3.0"
@@ -946,6 +953,7 @@ __metadata:
   resolution: "playwright@workspace:."
   dependencies:
     "@types/node": "npm:^22.7.5"
+    export-to-csv: "npm:^1.4.0"
     playwright: "npm:^1.48.0"
     tsx: "npm:^4.19.1"
     typescript: "npm:^5.6.3"
