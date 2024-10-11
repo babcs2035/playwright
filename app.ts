@@ -9,7 +9,7 @@ async function trimAll(element: Locator): Promise<string> {
 
 function generateCsvFromTable(headers: string[], data: string[][]): void {
   const writeData: { [key: string]: string }[] = [];
-  data.forEach(rowData => {
+  data.slice(headers.length).forEach(rowData => {
     const row: { [key: string]: string } = {};
     for (let i = 0; i < rowData.length; i++) {
       row[headers[i]] = rowData[i];
