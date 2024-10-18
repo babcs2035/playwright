@@ -45,11 +45,21 @@ async function initializeListsPage(page: Page) {
 async function processTarget(context: BrowserContext, page: Page, target: string[]) {
 
   //「法規制等一覧」
-  const listRows = await page.locator(".ac-t-column1");
+  // const listRows = await page.locator(".ac-t-column1");
+  // ac-node2 ac-node2-indent
+  const listRows = await page.locator(".accordion").locator("ul").first().locator("li").first().locator(".close_open");
   for (let i = 0; i < await listRows.count(); i++) {
-    const rowElement = await listRows.nth(i);
-    const listName = (await rowElement.allInnerTexts())[0].trim();
-    if (listName === target[0]) {
+    const listElement = await listRows.nth(i);
+    const lawTitle = await trimAll(await listElement.locator(".ac-node2.ac-node2-indent"));
+    if (lawTitle !== target[0]) continue;
+
+    const tableHeaders: string[] = [];
+    const tableData: string[][] = [];
+    const rowElements = await listElement.locator(".ac-t-column1");
+    for (let list_i = 0; list_i < await rowElements.count(); list_i++) {
+      const rowElement = await rowElements.nth(list_i);
+      console.log("\nProcessing", await trimAll(rowElement), "list");
+
       const linkElement = await rowElement.locator("a").first();
       const [tablePage] = await Promise.all([
         context.waitForEvent("page"),
@@ -86,9 +96,7 @@ async function processTarget(context: BrowserContext, page: Page, target: string
 
       //「中間検索結果」CHRIP_ID及びCAS RNによる表示
       await detailTablePage.goto(detailTablePage.url());
-      console.log("Updated detail table (url:", detailTablePage.url(), ")");
-      const tableHeaders: string[] = [];
-      const tableData: string[][] = [];
+      console.log("Updated detail table (", detailTablePage.url(), ")");
       let currentPageNum = 1;
       while (true) {
         const tableRows = await detailTablePage.locator(".list-table").locator("tr");
@@ -97,28 +105,29 @@ async function processTarget(context: BrowserContext, page: Page, target: string
           const tds = await rowElement.locator(`${j === 0 ? "td table tbody tr td:nth-child(1)" : "td"}`);
           for (let k = 0; k < await tds.count(); k++) {
             const td = await tds.nth(k);
-            if (currentPageNum === 1 && j === 0) {
-              tableHeaders.push(headersDict[await trimAll(td)] || await trimAll(td));
+            if (list_i === 0 && currentPageNum === 1 && j === 0) {
+              const originalHead = await trimAll(td);
+              tableHeaders.push(headersDict[originalHead] || originalHead);
             }
             else {
               if (k == 0) {
                 tableData.push([]);
               }
-              tableData[(currentPageNum - 1) * 100 + j - 1].push(await trimAll(td));
+              tableData[tableData.length - 1].push(await trimAll(td));
             }
           }
         }
 
         const paginationButtons = await detailTablePage.locator("a").getByText("次のページ＞＞");
-        if (await paginationButtons.count() < 2 || (isDebug && currentPageNum >= 2)) {
+        if (await paginationButtons.count() < 2 || isDebug) {
           break;
         }
         await paginationButtons.first().click();
         currentPageNum += 1;
         console.log("Turned to page", currentPageNum);
       }
-      saveTableToCSV(tableHeaders, tableData, target[0]);
     }
+    saveTableToCSV(tableHeaders, tableData, target[0]);
   }
 }
 
@@ -128,7 +137,9 @@ async function trimAll(element: Locator): Promise<string> {
 
 function saveTableToCSV(headers: string[], data: string[][], targetList: string): void {
   const writeData: { [key: string]: string }[] = [];
-  data.slice(headers.length).forEach(rowData => {
+  data.filter((dat) => {
+    return !isNaN(dat[0]);
+  }).forEach(rowData => {
     const row: { [key: string]: string } = {};
     for (let i = 0; i < rowData.length; i++) {
       row[headers[i]] = rowData[i];
