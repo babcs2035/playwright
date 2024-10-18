@@ -5,9 +5,21 @@ import { writeFile } from "node:fs";
 import { Buffer } from "node:buffer";
 import * as fs from "fs";
 
+const isDebug = true;
+const headersCSVFilename = "headers.csv";
 const inputCSVFilename = "input.csv";
 const outputCSVFilenamePrefix = "output";
 const targets: string[][] = [];
+const headersDict: { [key: string]: string } = {};
+
+function getHeadersDict() {
+  const data = fs.readFileSync(headersCSVFilename);
+  const records = parse(data);
+  for (const record of records) {
+    headersDict[record[0]] = record[1];
+  }
+  console.log("Loaded headers CSV file");
+}
 
 function getTargets() {
   const data = fs.readFileSync(inputCSVFilename);
@@ -15,7 +27,7 @@ function getTargets() {
   for (const record of records) {
     targets.push(record);
   }
-  console.log("Loaded CSV file");
+  console.log("Loaded targets CSV file");
 }
 
 async function initializeListsPage(page: Page) {
@@ -86,7 +98,7 @@ async function processTarget(context: BrowserContext, page: Page, target: string
           for (let k = 0; k < await tds.count(); k++) {
             const td = await tds.nth(k);
             if (currentPageNum === 1 && j === 0) {
-              tableHeaders.push(await trimAll(td));
+              tableHeaders.push(headersDict[await trimAll(td)] || await trimAll(td));
             }
             else {
               if (k == 0) {
@@ -98,7 +110,7 @@ async function processTarget(context: BrowserContext, page: Page, target: string
         }
 
         const paginationButtons = await detailTablePage.locator("a").getByText("次のページ＞＞");
-        if (await paginationButtons.count() < 2) {
+        if (await paginationButtons.count() < 2 || (isDebug && currentPageNum >= 2)) {
           break;
         }
         await paginationButtons.first().click();
@@ -139,6 +151,7 @@ function saveTableToCSV(headers: string[], data: string[][], targetList: string)
   const context = await browser.newContext();
   const page = await context.newPage();
 
+  getHeadersDict();
   getTargets();
   for (const target of targets) {
     console.log("--------------------------------\nProcessing", target[0]);
