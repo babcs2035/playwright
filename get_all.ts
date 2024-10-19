@@ -20,11 +20,11 @@ async function isFileExist(filename: string) {
 async function initializeListsPage(page: Page) {
 
   //「法規制等一覧」
-  await page.goto("https://www.chem-info.nite.go.jp/chem/chrip/chrip_search/sltLst");
+  await page.goto("https://www.chem-info.nite.go.jp/chem/chrip/chrip_search/sltLst", { timeout: 600000 });
   const openButtons = await page.locator(".ac-default");
   for (let i = 0; i < await openButtons.count(); i++) {
     const button = await openButtons.nth(i);
-    await button.click();
+    await button.click({ timeout: 600000 });
   }
   console.log("Initialized lists page");
 }
@@ -51,8 +51,8 @@ async function process(context: BrowserContext, page: Page) {
 
       const linkElement = await rowElement.locator("a").first();
       const [tablePage] = await Promise.all([
-        context.waitForEvent("page"),
-        linkElement.click()
+        context.waitForEvent("page", { timeout: 600000 }),
+        linkElement.click({ timeout: 600000 })
       ])
 
       //「中間検索結果」政令番号等による表示
@@ -60,7 +60,7 @@ async function process(context: BrowserContext, page: Page) {
       console.log("Opened initial table");
       const [detailTablePage] = await Promise.all([
         context.waitForEvent("page", { timeout: 600000 }),
-        tablePage.locator(".right-item.block").locator("a").first().click()
+        tablePage.locator(".right-item.block").locator("a").first().click({ timeout: 600000 })
       ])
 
       //「中間検索結果」CHRIP_ID及びCAS RNによる表示
