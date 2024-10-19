@@ -59,12 +59,12 @@ async function process(context: BrowserContext, page: Page) {
       await tablePage.goto(tablePage.url());
       console.log("Opened initial table");
       const [detailTablePage] = await Promise.all([
-        context.waitForEvent("page", { timeout: 120000 }),
+        context.waitForEvent("page", { timeout: 600000 }),
         tablePage.locator(".right-item.block").locator("a").first().click()
       ])
 
       //「中間検索結果」CHRIP_ID及びCAS RNによる表示
-      await detailTablePage.goto(detailTablePage.url(), { timeout: 120000 });
+      await detailTablePage.goto(detailTablePage.url(), { timeout: 600000 });
       console.log("Opened detail table (", detailTablePage.url(), ")");
 
       let currentPageNum = 1;
@@ -85,7 +85,7 @@ async function process(context: BrowserContext, page: Page) {
         if (await paginationButtons.count() < 2 || isDebug) {
           break;
         }
-        await paginationButtons.first().click({ timeout: 120000 });
+        await paginationButtons.first().click({ timeout: 600000 });
         currentPageNum += 1;
         console.log("Turned to page", currentPageNum);
       }

@@ -5,7 +5,7 @@ import { writeFile } from "node:fs";
 import { Buffer } from "node:buffer";
 import * as fs from "fs";
 
-const isDebug = true;
+const isDebug = false;
 const headersCSVFilename = "detail_headers.csv";
 const inputCSVFilename = "detail_input.csv";
 const outputCSVFilenamePrefix = "output/detail";
@@ -71,17 +71,17 @@ async function processTarget(context: BrowserContext, page: Page, target: string
       await tablePage.goto(tablePage.url());
       console.log("Opened initial table");
       const [detailTablePage] = await Promise.all([
-        context.waitForEvent("page", { timeout: 120000 }),
+        context.waitForEvent("page", { timeout: 600000 }),
         tablePage.locator(".right-item.block").locator("a").first().click()
       ])
 
       //「中間検索結果」CHRIP_ID及びCAS RNによる表示
-      await detailTablePage.goto(detailTablePage.url(), { timeout: 120000 });
+      await detailTablePage.goto(detailTablePage.url(), { timeout: 600000 });
       console.log("Opened detail table");
       await detailTablePage.locator(".setButton.standard").nth(1).click();
 
       //「中間検索結果」＜表示項目の追加設定＞
-      await detailTablePage.goto(detailTablePage.url(), { timeout: 120000 });
+      await detailTablePage.goto(detailTablePage.url(), { timeout: 600000 });
       console.log("Opened additional settings");
       const lawsList = await detailTablePage.locator(".ac-node2.ac-node2-indent");
       for (let j = 0; j < await lawsList.count(); j++) {
@@ -93,10 +93,10 @@ async function processTarget(context: BrowserContext, page: Page, target: string
           await lawLinkElement.setChecked(true);
         }
       }
-      await detailTablePage.locator("#redisplay").first().click({ timeout: 120000 });
+      await detailTablePage.locator("#redisplay").first().click({ timeout: 600000 });
 
       //「中間検索結果」CHRIP_ID及びCAS RNによる表示
-      await detailTablePage.goto(detailTablePage.url(), { timeout: 120000 });
+      await detailTablePage.goto(detailTablePage.url(), { timeout: 600000 });
       console.log("Updated detail table (", detailTablePage.url(), ")");
       let currentPageNum = 1;
       while (true) {
@@ -170,7 +170,7 @@ async function processTarget(context: BrowserContext, page: Page, target: string
         if (await paginationButtons.count() < 2 || isDebug) {
           break;
         }
-        await paginationButtons.first().click({ timeout: 120000 });
+        await paginationButtons.first().click({ timeout: 600000 });
         currentPageNum += 1;
         console.log("Turned to page", currentPageNum);
       }
