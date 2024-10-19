@@ -4,12 +4,11 @@ import { mkConfig, generateCsv, asString } from "export-to-csv";
 import { writeFile } from "node:fs";
 import { Buffer } from "node:buffer";
 import * as fs from "fs";
-import { text } from "stream/consumers";
 
 const isDebug = true;
-const headersCSVFilename = "headers.csv";
-const inputCSVFilename = "input.csv";
-const outputCSVFilenamePrefix = "output";
+const headersCSVFilename = "detail_headers.csv";
+const inputCSVFilename = "detail_input.csv";
+const outputCSVFilenamePrefix = "output/detail";
 const targets: string[][] = [];
 const headersDict: { [key: string]: string } = {};
 const additionalHeaders = ["safe_prohibited_rate", "safe_permission_rate", "safe_sds_publish_rate", "safe_sds_notify_rate", "safe_tokka_rate"]
@@ -48,8 +47,6 @@ async function initializeListsPage(page: Page) {
 async function processTarget(context: BrowserContext, page: Page, target: string[]) {
 
   //「法規制等一覧」
-  // const listRows = await page.locator(".ac-t-column1");
-  // ac-node2 ac-node2-indent
   const listRows = await page.locator(".accordion").locator("ul").first().locator("li").first().locator(".close_open");
   for (let i = 0; i < await listRows.count(); i++) {
     const listElement = await listRows.nth(i);
@@ -173,7 +170,7 @@ async function processTarget(context: BrowserContext, page: Page, target: string
         if (await paginationButtons.count() < 2 || isDebug) {
           break;
         }
-        await paginationButtons.first().click();
+        await paginationButtons.first().click({ timeout: 120000 });
         currentPageNum += 1;
         console.log("Turned to page", currentPageNum);
       }
