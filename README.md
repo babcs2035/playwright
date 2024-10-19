@@ -18,5 +18,6 @@
 
 ```bash
 yarn
+npx playwright install
 npx tsx *.ts
 ```

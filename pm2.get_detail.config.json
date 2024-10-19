@@ -1,0 +1,4 @@
+{
+  "name": "playwright (get_detail)",
+  "script": "npx tsx get_detail.ts"
+}
