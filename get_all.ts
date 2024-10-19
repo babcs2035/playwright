@@ -56,7 +56,7 @@ async function process(context: BrowserContext, page: Page) {
       ])
 
       //「中間検索結果」政令番号等による表示
-      await tablePage.goto(tablePage.url());
+      await tablePage.goto(tablePage.url(), { timeout: 600000 });
       console.log("Opened initial table");
       const [detailTablePage] = await Promise.all([
         context.waitForEvent("page", { timeout: 600000 }),
