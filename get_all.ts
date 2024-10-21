@@ -64,8 +64,15 @@ async function process(context: BrowserContext, page: Page) {
       ])
 
       //「中間検索結果」CHRIP_ID及びCAS RNによる表示
+      let error_text = "";
       await detailTablePage.goto(detailTablePage.url(), { timeout: 600000 });
       console.log("Opened detail table (", detailTablePage.url(), ")");
+      error_text = await trimAll(await detailTablePage.locator(".result-area"));
+      while (error_text === "不正なURLが入力されました。") {
+        console.log("Reopen detail table");
+        await detailTablePage.goto(detailTablePage.url(), { timeout: 600000 });
+        error_text = await trimAll(await detailTablePage.locator(".result-area"));
+      }
 
       let currentPageNum = 1;
       while (true) {
@@ -85,9 +92,15 @@ async function process(context: BrowserContext, page: Page) {
         if (await paginationButtons.count() < 2 || isDebug) {
           break;
         }
-        await paginationButtons.first().click({ timeout: 600000 });
         currentPageNum += 1;
+        await paginationButtons.first().click({ timeout: 600000 });
         console.log("Turned to page", currentPageNum);
+        error_text = await trimAll(await detailTablePage.locator(".result-area"));
+        while (error_text === "不正なURLが入力されました。") {
+          console.log("Reopen page", currentPageNum);
+          await detailTablePage.goto(detailTablePage.url(), { timeout: 600000 });
+          error_text = await trimAll(await detailTablePage.locator(".result-area"));
+        }
       }
     }
     saveTableToCSV(headers, tableData, lawTitle);
