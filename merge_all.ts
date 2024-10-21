@@ -1,5 +1,3 @@
-// merge all csv tables into one
-//
 import * as fs from "fs";
 
 (async () => {

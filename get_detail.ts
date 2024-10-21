@@ -4,6 +4,7 @@ import { mkConfig, generateCsv, asString } from "export-to-csv";
 import { writeFile } from "node:fs";
 import { Buffer } from "node:buffer";
 import * as fs from "fs";
+import { access } from "fs/promises";
 
 const isDebug = false;
 const headersCSVFilename = "detail_headers.csv";
@@ -13,6 +14,15 @@ const targets: string[][] = [];
 const headersDict: { [key: string]: string } = {};
 const additionalHeaders = ["safe_prohibited_rate", "safe_permission_rate", "safe_sds_publish_rate", "safe_sds_notify_rate", "safe_tokka_rate"]
 const numbersDict = { "０": "0", "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9", "．": "." };
+
+async function isFileExist(filename: string) {
+  try {
+    await access(filename);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function getHeadersDict() {
   const data = fs.readFileSync(headersCSVFilename);
@@ -59,7 +69,12 @@ async function processTarget(context: BrowserContext, page: Page, target: string
     for (let list_i = 0; list_i < await rowElements.count(); list_i++) {
       if (isDebug && list_i > 0) break;
       const rowElement = await rowElements.nth(list_i);
-      console.log("\nProcessing", await trimAll(rowElement), "list");
+      const listTitle = await trimAll(rowElement);
+      if (await isFileExist(`${outputCSVFilenamePrefix}-${target[0]}_${listTitle}.csv`)) {
+        console.log("\nSkipped", listTitle, "list");
+        continue;
+      }
+      console.log("\nProcessing", listTitle, "list");
 
       const linkElement = await rowElement.locator("a").first();
       const [tablePage] = await Promise.all([
@@ -174,6 +189,7 @@ async function processTarget(context: BrowserContext, page: Page, target: string
         currentPageNum += 1;
         console.log("Turned to page", currentPageNum);
       }
+      saveTableToCSV(tableHeaders, tableData, `${target[0]}_${listTitle}`);
     }
     saveTableToCSV(tableHeaders, tableData, target[0]);
   }
